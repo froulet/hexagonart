@@ -1,0 +1,549 @@
+<html>
+
+<head>
+
+<title>Hexagonart</title>
+<meta charset="utf-8">
+<link rel="stylesheet" href="style.css">
+<link href='http://fonts.googleapis.com/css?family=Audiowide|Raleway+Dots' rel='stylesheet' type='text/css'>
+	</head>
+
+	<body>
+		<nav>
+			-</nav>
+		<img src="img/Hexagonart.png" id="hexagonart">
+
+<div id="main-content">
+
+<br/>
+<br/>
+Texte à ajouter:
+<input type="text" id ="texte">
+</div>
+
+
+	<div id="dacanvas">
+		<canvas id="myCanvas" width="578" height="400" >
+		</canvas>
+		<br/>
+		<canvas id="canvas"  width="578" height="400">
+		</canvas>
+	</div>
+
+<!-- galerie de screens -->
+<aside>
+	<h2 style="border-bottom: 2px solid black">Galerie Des Logos Générés
+		<span style="font-size: 15px"><i></i></span></h2>
+	<ul id="gallerie"></ul>
+</aside>
+
+<footer>
+
+		Manon Maillot - Frantz Roulet<br/>
+		SRC - 2013
+
+</footer>
+	
+	</body>
+
+	<script type="text/javascript">
+
+
+var numero = 0;
+
+
+	/* Model */
+	/* ------------------------------ */
+
+// Objet Cube
+	var Cube = function(context, x, y, rgba, rgba2, rgba3, d){
+
+	/* Propriétés */
+
+	// Coordonnées
+	this.d = d;
+
+this.x = x;
+this.y = y;
+this.context = context;
+
+	// Rayon
+this.rgba = rgba;
+this.rgba2= rgba2;
+this.rgba3 = rgba3;
+
+
+
+
+	// Voir d'autres... couleurs, alpha...
+
+	/* Méthodes */
+	
+	// accesseurs ??
+		
+	};
+
+
+	var Model = {
+
+
+		Cubes : new Array(),
+		
+
+
+		reset : function(){
+			this.particles = new Array();
+		},
+
+		setupCubes 	: function( refCtx, espacex, espacey, division) {
+
+
+console.log(division);
+			
+			var imageData, image_data, pixelAlpha;
+        
+			//On récupère la largeur et hauteur du canvas
+			var canvasW = refCtx.canvas.width;
+			var canvasH = refCtx.canvas.height;
+		
+			imageData = refCtx.getImageData(0, 0, refCtx.canvas.width, refCtx.canvas.height);
+			data = imageData.data;
+
+
+//Fonction getRGBA permettant de "pipeter" la couleur du pixel lors du parcours de l'image
+			function getRGBA(x,y,p)
+{
+	var plus = 0;
+
+
+				   	
+		            
+		            
+//Si l'on se trouve sur la face du haut
+	if (p==1)
+		{ plus = 20;
+			var red = data[((myCanvas.width * y) + x) * 4] + plus;
+            var green = data[((myCanvas.width * y) + x) * 4 + 1] + plus;
+            var blue = data[((myCanvas.width * y) + x) * 4 + 2] + plus;
+            var alpha = data[((myCanvas.width * y) + x) * 4 + 3] + plus;
+
+            return ("rgb("+red+","+green+" ,"+blue+")");
+		}
+
+//Si l'on se trouve sur la face de gauche
+	if (p==2)
+		{ plus = 20 ;
+			var red = data[((myCanvas.width * y) + x) * 4] - plus;
+            var green = data[((myCanvas.width * y) + x) * 4 + 1] - plus;
+            var blue = data[((myCanvas.width * y) + x) * 4 + 2] - plus;
+            var alpha = data[((myCanvas.width * y) + x) * 4 + 3] - plus;
+
+            return ("rgb("+red+","+green+" ,"+blue+")");
+		}
+
+//Si l'on se trouve sur la face de droite
+		else 
+
+{			
+			var red = data[((myCanvas.width * y) + x) * 4] + plus;
+            var green = data[((myCanvas.width * y) + x) * 4 + 1] + plus;
+            var blue = data[((myCanvas.width * y) + x) * 4 + 2] + plus;
+            var alpha = data[((myCanvas.width * y) + x) * 4 + 3] + plus;
+
+            return ("rgb("+red+","+green+" ,"+blue+")");
+            }
+
+
+}
+
+
+			//Déplacement sur l'axe height
+			for( var height = 0; height < canvasH+35; height += espacey  ) {
+
+				if ( height/2 == Math.ceil(height/2))
+			          {
+			            var decalage = 20;
+			           
+			          }
+
+			          else
+			          {
+			            var decalage = 0;
+			            
+			          }
+
+				//Déplacement sur l'axe width
+				for( var width = 0; width < canvasW+35; width += espacex ) {
+				   
+
+				   	//Pipettage de la face de haut
+		            var rgba = getRGBA(width,height, 0);
+		            //Pipettage de la face de gauche
+		            var rgba2 = getRGBA(width,height, 1);
+		            //Pipettage de la face droit
+		            var rgba3 = getRGBA(width,height, 2);
+
+
+					//Ajout des hexagones dans le tableau
+					this.Cubes.push(new Cube(refCtx, width+decalage, height, rgba, rgba2, rgba3, division));
+
+				}
+
+			}
+		}
+
+
+	};
+
+	
+
+	var Vue = {
+		ctxToDraw : document.getElementById('myCanvas').getContext('2d'),
+		
+		ctxToWork : document.getElementById('canvas').getContext('2d'),
+		
+		
+		//Fonction permettant d'effacer les deux canvas
+		clear : function(){
+			this.ctxToDraw.clearRect(0, 0, this.ctxToDraw.canvas.width, this.ctxToDraw.canvas.height);
+			this.ctxToWork.clearRect(0, 0, this.ctxToWork.canvas.width, this.ctxToWork.canvas.height);
+		},
+
+		//Fonction permettant de dessiner les hexagones : ceux-ci se composent de trois trapèzez distincts,
+		//ayant chacun une couleur spécifique
+
+		drawCube : function(context, x, y, rgba, rgba2, rgba3, d){
+		
+			div = d;
+			x = x-40/2;
+			y = y-50/2;
+
+			context.lineWidth = 0;
+
+
+
+			//Premier trapèze (supérieur)
+			context.beginPath();
+			context.fillStyle = rgba;
+			context.moveTo((20+x)/div, (0+y)/div);
+			context.lineTo((40+x)/div, (15+y)/div);
+			context.lineTo((20+x)/div, (30+y)/div);
+			context.lineTo((0+x)/div, (15+y)/div);
+			context.closePath();
+			context.stroke();
+			context.fill();
+
+			//Second trapèze (gauche)
+			context.beginPath();
+			context.fillStyle = rgba2;
+			context.moveTo((20+x)/div, (30+y)/div);
+			context.lineTo((20+x)/div, (50+y)/div);
+			context.lineTo((0+x)/div, (35+y)/div);
+			context.lineTo((0+x)/div, (15+y)/div);
+			context.closePath();
+			context.stroke();
+			context.fill();
+
+			//Troisième trapèze (droit)
+			context.beginPath();
+			context.fillStyle = rgba3;
+			context.moveTo((20+x)/div, (30+y)/div);
+			context.lineTo((20+x)/div, (50+y)/div);
+			context.lineTo((40+x)/div, (35+y)/div);
+			context.lineTo((40+x)/div,(15+y)/div);
+			context.closePath();
+			context.stroke();
+			context.fill(); 
+
+		}
+
+
+	};
+	
+
+	/* Controleur */
+	/* ------------------------------ */
+
+
+	// Mon appli Gen
+	var Gen = {
+		model: Model,
+		controleur:{},
+		view: Vue
+	};
+
+
+	//Dessin de tous les hexagones sur le Canvas
+	Gen.controleur.synchronize = function(){
+	for (var i=0; i<Gen.model.Cubes.length; i++){
+			var p = Gen.model.Cubes[i];
+			Gen.view.drawCube(p.context, p.x, p.y, p.rgba, p.rgba2, p.rgba3, p.d);
+			
+		}
+	};
+
+	Gen.controleur.init=function(x,y,d, src){
+
+
+		var imageX = 0;
+        var imageY = 0;
+
+		var imageObj = new Image();
+  
+        imageObj.src = src;
+
+
+      //On adapte la taille du canvas à la taille de l'image
+      myCanvas.width = imageObj.width;
+        myCanvas.height = imageObj.height ;
+
+         canvas.width = imageObj.width;
+        canvas.height = imageObj.height ;
+      
+      
+		
+		Gen.view.ctxToDraw.drawImage(imageObj, imageX, imageY,  myCanvas.width, myCanvas.height);
+		Gen.view.ctxToWork.drawImage(imageObj, imageX, imageY,  myCanvas.width, myCanvas.height);
+
+        var imageData = Gen.view.ctxToDraw.getImageData(0, 0,  myCanvas.width, myCanvas.height);
+
+         //draw the new image with the modified image data
+        Gen.view.ctxToDraw.putImageData(imageData, imageX, imageY);
+
+		Gen.model.setupCubes( Gen.view.ctxToDraw, x, y, d);
+		Gen.controleur.synchronize();
+
+
+//Redimension du canvas si l'image s'avère trop grande
+		if (myCanvas.width > 900) 
+			{ myCanvas.style.width =  myCanvas.width/3 +"px";
+			myCanvas.style.height =  myCanvas.height/3 +"px";
+			canvas.style.width =  canvas.width/3 +"px";
+		canvas.style.height =  canvas.height/3 +"px";
+	}
+
+
+	if (myCanvas.width >1800) 
+			{ myCanvas.style.width =  myCanvas.width/4 +"px";
+			myCanvas.style.height =  myCanvas.height/4 +"px";
+			canvas.style.width =  canvas.width/4 +"px";
+		canvas.style.height =  canvas.height/4 +"px";
+	}
+
+
+
+//On supprime l'objet image actuelle afin d'adapter le canvas aux dimensions de la prochaine
+delete imageObj;
+  
+// création des logos de la gallerie
+addtogallerie(myCanvas);
+
+	};
+
+
+window.addEventListener("load", init, false);
+		// initialisation et lancement du programme
+		function init(){
+
+mouseDown = false,
+brushColor = "rgb(0, 0, 0)",
+hasText = true,
+clearCanvas = function () {
+if (hasText) {
+context.clearRect(0, 0, canvas.width, canvas.height);
+hasText = false;
+}
+};
+
+
+
+(function () {
+var canvas = document.getElementById("myCanvas"),
+context = canvas.getContext("2d"),
+img = document.createElement("img"),
+mouseDown = false,
+brushColor = "rgb(0, 0, 0)",
+hasText = true,
+clearCanvas = function () {
+if (hasText) {
+context.clearRect(0, 0, canvas.width, canvas.height);
+hasText = false;
+}
+};
+ 
+// Ajout des instructions
+context.font="17px Verdana";
+context.fillStyle="#000000"
+context.fillText("Drop an image onto the canvas", 160, 200);
+
+
+// Chargement de l'image et lancement du dessin    
+img.addEventListener("load", function () {
+clearCanvas();
+context.drawImage(img, 0, 0);
+Gen.controleur.init(40,35, 1, img.src);
+
+
+//Mise en place de la fonction permettant d'ajouter du texte
+
+var writing = document.getElementById('texte');
+writing.addEventListener("change", function (evt) {
+
+var canvas = document.getElementById("myCanvas");
+var context = canvas.getContext("2d");
+
+
+var size = Math.round(canvas.width/14);
+context.fillStyle="rgba(255,255,255,0.4)";
+context.font =size +"px 'Audiowide', cursive";
+var largeurtext = context.measureText(writing.value).width;
+context.fillRect(0, 300 - size, largeurtext, largeurtext - size);
+
+
+console.log(context.font);
+context.fillStyle="#000000"
+context.fillText(writing.value, 0, 300);
+
+console.log(largeurtext);
+
+addtogallerie(canvas);
+
+}, false);
+
+
+
+}, false);
+ 
+//FOnction permettant de dessiner sur le Canvas
+
+		// Detect mousedown
+		canvas.addEventListener("mousedown", function (evt) {
+
+		var context = canvas.getContext("2d");
+		clearCanvas();
+		mouseDown = true;
+		context.beginPath();
+		}, false);
+		 
+		// Detect mouseup
+		canvas.addEventListener("mouseup", function (evt) {
+			var context = canvas.getContext("2d");
+		mouseDown = false;
+		var colors = context.getImageData(evt.offsetX, evt.offsetY, 1, 1).data;
+		brushColor = "rgb(" + colors[0] + ", " + colors[1] + ", " + colors[2] + ")";
+		}, false);
+		 
+		// Draw, if mouse button is pressed
+		canvas.addEventListener("mousemove", function (evt) {
+			var context = canvas.getContext("2d");
+		if (mouseDown) {
+		context.strokeStyle = brushColor;                              
+		context.lineWidth = 10;
+		context.lineJoin = "round";
+		context.lineTo(evt.offsetX+1, evt.offsetY+1);
+		context.stroke();
+		}
+		}, false);
+
+
+//Drag And Drop
+ 
+			// To enable drag and drop
+			canvas.addEventListener("dragover", function (evt) {
+			evt.preventDefault();
+			}, false);
+			 
+			// Handle dropped image file - only Firefox and Google Chrome
+			canvas.addEventListener("drop", function (evt) {
+			var files = evt.dataTransfer.files;
+			if (files.length > 0) {
+			var file = files[0];
+			if (typeof FileReader !== "undefined" && file.type.indexOf("image") != -1) {
+			var reader = new FileReader();
+			// Note: addEventListener doesn't work in Google Chrome for this event
+			reader.onload = function (evt) {
+			img.src = evt.target.result;
+			};
+			reader.readAsDataURL(file);
+			}
+			}
+			evt.preventDefault();
+			}, false);
+			 
+			// Save image
+			var saveImage = document.createElement("button");
+			saveImage.innerHTML = "Sauvegarder";
+			saveImage.addEventListener("click", function (evt) {
+			window.open(canvas.toDataURL("image/png"));
+			evt.preventDefault();
+			addtogallerie(canvas);
+			}, false);
+
+			document.getElementById("main-content").appendChild(saveImage);
+			})();
+
+
+}
+
+
+//Fonction permettant d'ajouter une image à la gallerie
+function addtogallerie(dacan)
+{
+
+				var galerie = document.getElementById("gallerie");
+
+
+				var nodeLi = document.createElement("li");
+				galerie.appendChild(nodeLi);
+				var nodeLink = document.createElement("a");
+				nodeLi.appendChild(nodeLink);
+				var nodeImg = document.createElement("img");
+				nodeImg.style.width = 100 + "px";
+				nodeImg.style.borderRadius = "10px 0 10px 0";
+				nodeLink.appendChild(nodeImg);
+				var dataURL = dacan.toDataURL();
+				nodeImg.src = dataURL;
+				nodeImg.alt="Ma Screen"+numero;
+				nodeImg.name="Ma Screen"+numero;
+				nodeLink.href = nodeImg.src;
+				nodeLink.target="_blank";
+				numero++;
+}
+
+
+//Ajout du bouton Crop et de sa fonction	
+var cropper = document.createElement("button");
+document.getElementById('main-content').appendChild(cropper);
+
+cropper.innerHTML = "Cropper";
+
+cropper.addEventListener("click", function() {
+
+ var Mycanvas = document.getElementById('myCanvas');
+      var context = Mycanvas.getContext('2d');
+
+       var canvas = document.getElementById('canvas');
+       var context2 = canvas.getContext('2d');
+
+        context2.canvas.width=300;
+        context2.canvas.height=300;
+        canvas.style.width= 300 +'px';
+        canvas.style.height= 300 +'px';
+        // draw cropped image
+        var sourceX = 150;
+        var sourceY = 160;
+        var sourceWidth = 300;
+        var sourceHeight = 300;
+        var destWidth = sourceWidth;
+        var destHeight = sourceHeight;
+        var destX = 0;
+        var destY = 0;
+        
+
+        context2.drawImage(Mycanvas, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
+       	addtogallerie(canvas);
+
+			}, false);
+        	
+        	</script>
+</html>
